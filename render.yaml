@@ -34,3 +34,4 @@ services:
 databases:
   - name: sentinelssh-db
     plan: free
+    region: frankfurt          # MUST match the web service region (internal DNS)
