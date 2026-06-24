@@ -1,0 +1,36 @@
+# Render Blueprint — hosts the SentinelSSH DASHBOARD (Flask API + UI) only.
+# The honeypot is intentionally NOT deployed (it needs a real SSH port and a
+# server you own). Deploy: push to GitHub, then on render.com -> New -> Blueprint
+# and point it at this repo. Everything below provisions automatically.
+services:
+  - type: web
+    name: sentinelssh-dashboard
+    runtime: python
+    plan: free
+    region: frankfurt          # change to your nearest region if you like
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: bash deploy/render-start.sh
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: FLASK_ENV          # production config -> HTTPS-secure cookies
+        value: production
+      - key: DEMO_MODE          # populate the dashboard with demo data
+        value: "true"
+      - key: SECRET_KEY         # session signing key (auto-generated, kept secret)
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD     # change this in the Render dashboard after first deploy
+        value: sentinel123
+      - key: SEED_DEMO_COUNT    # how many demo attacks to generate on first boot
+        value: "550"
+      - key: DATABASE_URL       # wired automatically from the database below
+        fromDatabase:
+          name: sentinelssh-db
+          property: connectionString
+
+databases:
+  - name: sentinelssh-db
+    plan: free
