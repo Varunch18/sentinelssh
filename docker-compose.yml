@@ -1,0 +1,86 @@
+# SentinelSSH — full stack: honeypot + backend/dashboard + PostgreSQL.
+# One-command startup:  docker compose up --build
+# Dashboard: http://localhost:8008   ·   Honeypot SSH: localhost:2222
+name: sentinelssh
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinel}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinelssh}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sentinel} -d ${POSTGRES_DB:-sentinelssh}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [sentinel-net]
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-sentinel}@db:5432/${POSTGRES_DB:-sentinelssh}
+      FLASK_ENV: production
+      PORT: 8008
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      AUTH_REQUIRED: "true"
+      # Plain HTTP on localhost: disable secure-only cookies. Set true behind TLS.
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-sentinel123}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-change-this-internal-token}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    ports:
+      - "8008:8008"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8008/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks: [sentinel-net]
+    restart: unless-stopped
+
+  honeypot:
+    build:
+      context: .
+      dockerfile: honeypot/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sentinel}:${POSTGRES_PASSWORD:-sentinel}@db:5432/${POSTGRES_DB:-sentinelssh}
+      INTERNAL_EVENTS_URL: http://backend:8008/api/internal/events
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-change-this-internal-token}
+      HONEYPOT_PORT: 2222
+      HONEYPOT_HOST_KEY: /app/keys/host_rsa.key
+      HONEYPOT_JSONL: /app/data/captures.jsonl
+      THREAT_FEED_PATH: ${THREAT_FEED_PATH:-/app/data/threat_feed.txt}
+    ports:
+      - "${HONEYPOT_PUBLISH_PORT:-2222}:2222"
+    volumes:
+      - honeypot-keys:/app/keys
+      - honeypot-data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks: [sentinel-net]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  honeypot-keys:
+  honeypot-data:
+
+networks:
+  sentinel-net:
+    driver: bridge

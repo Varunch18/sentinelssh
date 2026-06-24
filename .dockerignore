@@ -1,0 +1,28 @@
+# Python
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# Local data / secrets (never bake into images)
+data/*.sqlite3
+data/*.jsonl
+keys/*.key
+.env
+.env.*
+!.env.docker.example
+
+# VCS / OS / editor
+.git/
+.gitignore
+.DS_Store
+*.swp
+
+# Docs build artifacts
+docs/_build/
+
+# Node (none used, but defensive)
+node_modules/

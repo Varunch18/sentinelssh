@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Secrets & local config
+.env
+
+# Honeypot runtime artifacts
+honeypot/keys/
+keys/
+data/
+*.jsonl
+*.log
+
+# DB
+*.sqlite3
+*.db
+data/*.sqlite3
+
+# MaxMind GeoLite2 databases — licensed downloads, must NOT be committed.
+# Obtain from https://www.maxmind.com (free account) and place in data/.
+data/GeoLite2-ASN.mmdb
+data/GeoLite2-City.mmdb
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

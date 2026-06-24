@@ -1,0 +1,11 @@
+# SentinelSSH local threat feed (sample)
+# One IP or CIDR per line. Lines starting with '#' are comments.
+# In production, refresh this file from external feeds (AbuseIPDB, FireHOL,
+# Tor exit lists, etc.) via cron. Copy to the path set by THREAT_FEED_PATH
+# (default: data/threat_feed.txt).
+
+# Example illustrative ranges (NOT authoritative):
+185.220.100.0/22
+171.25.193.0/24
+45.95.147.0/24
+192.0.2.0/24

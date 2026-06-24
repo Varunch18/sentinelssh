@@ -1,0 +1,26 @@
+# SentinelSSH — manages the Docker Compose stack as a systemd service so the
+# honeypot + dashboard start on boot and restart on failure.
+# Install:
+#   sudo cp deploy/systemd/sentinelssh.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sentinelssh
+# Adjust WorkingDirectory to your clone path.
+
+[Unit]
+Description=SentinelSSH honeypot + SOC dashboard (Docker Compose)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/sentinelssh
+EnvironmentFile=/opt/sentinelssh/.env
+ExecStart=/usr/bin/docker compose up -d --build
+ExecStop=/usr/bin/docker compose down
+ExecReload=/usr/bin/docker compose up -d --build
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

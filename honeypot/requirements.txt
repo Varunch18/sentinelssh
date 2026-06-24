@@ -1,0 +1,6 @@
+paramiko==3.4.0
+
+# Shared data layer dependencies (the `core` package is mounted on PYTHONPATH).
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.9
+geoip2==4.8.0
