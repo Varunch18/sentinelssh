@@ -45,7 +45,13 @@ _SessionFactory: Optional[sessionmaker] = None
 
 
 def get_database_url() -> str:
-    return os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
+    url = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
+    # Some managed hosts (e.g. Render/Heroku) expose the legacy "postgres://"
+    # scheme, which SQLAlchemy 2.0 no longer accepts. Normalise to the
+    # canonical "postgresql://" so the same URL works everywhere.
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    return url
 
 
 def get_engine(database_url: Optional[str] = None) -> Engine:
